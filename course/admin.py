@@ -1,4 +1,3 @@
-
 from django.contrib import admin
 from django.contrib.auth.models import User, Group
 from django.contrib.auth.admin import UserAdmin, GroupAdmin
@@ -23,11 +22,13 @@ class QuestionAdmin(admin.ModelAdmin):
 
 class LessonAdmin(admin.ModelAdmin):
     inlines = [QuestionInline]
+    list_display = ("title", "course")
 
 
 admin.site.register(Course)
 admin.site.register(Lesson, LessonAdmin)
 admin.site.register(Question, QuestionAdmin)
+admin.site.register(Choice)
 admin.site.register(Submission)
 
 admin.site.unregister(User)
