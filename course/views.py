@@ -31,12 +31,27 @@ def exam(request, lesson_id):
     )
 
 
-def submit(request, lesson_id):
-    lesson = get_object_or_404(Lesson, id=lesson_id)
+def submit(request, course_id):
+    course = get_object_or_404(Course, id=course_id)
+    lesson = Lesson.objects.filter(course=course).first()
+
+    if lesson is None:
+        return render(
+            request,
+            "exam_result.html",
+            {
+                "lesson": None,
+                "score": 0,
+                "total": 0,
+                "results": [],
+            },
+        )
+
     questions = Question.objects.filter(lesson=lesson)
 
     score = 0
     results = []
+    first_submission_id = None
 
     if request.method == "POST":
 
@@ -55,11 +70,14 @@ def submit(request, lesson_id):
 
                 is_correct = choice.is_correct
 
-                Submission.objects.create(
+                submission = Submission.objects.create(
                     question=question,
                     selected_choice=choice,
                     is_correct=is_correct,
                 )
+
+                if first_submission_id is None:
+                    first_submission_id = submission.id
 
                 if is_correct:
                     score += 1
@@ -83,15 +101,16 @@ def submit(request, lesson_id):
             "score": score,
             "total": questions.count(),
             "results": results,
+            "submission_id": first_submission_id,
+            "course_id": course.id,
         },
     )
 
 
-def show_exam_result(request, lesson_id):
-    lesson = get_object_or_404(
-        Lesson,
-        id=lesson_id
-    )
+def show_exam_result(request, course_id, submission_id):
+    course = get_object_or_404(Course, id=course_id)
+
+    lesson = Lesson.objects.filter(course=course).first()
 
     score = request.session.get(
         "exam_score",
@@ -110,5 +129,7 @@ def show_exam_result(request, lesson_id):
             "lesson": lesson,
             "score": score,
             "total": total,
+            "submission_id": submission_id,
+            "course_id": course_id,
         },
     )
